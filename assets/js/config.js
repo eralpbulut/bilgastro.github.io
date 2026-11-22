@@ -20,7 +20,11 @@ window.BILGASTRO_CONFIG = {
 
   // The club's Google Sheet (share it as "Anyone with the link → Viewer", never Editor).
   // While it has no approved reviews, the site shows the sample places from data/sample-places.js.
-  sheetCsvUrl: "https://docs.google.com/spreadsheets/d/1UUkZhF0Mnomt0IartSXhi9-yzyLbey7-BmFAD9V2tls/edit?usp=sharing",
+  sheetCsvUrl: "https://docs.google.com/spreadsheets/d/1ahTM4ZDyYlEKFFfPC19Vsz_ga2Y3w1WvSNxrjhWKQqA/edit?usp=sharing",
+
+  // true  = show the made-up sample places (tagged "Sample") next to your real reviews.
+  // false = show only your real reviews. Switch to false once you have enough real places.
+  showSamples: true,
 
   // Upcoming club visits. Past dates are hidden automatically.
   events: [

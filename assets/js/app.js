@@ -13,6 +13,7 @@
       "title.home": "Bilgastro · Bilkent Gastronomy Society", "title.places": "Reviews · Bilgastro", "title.map": "Food map · Bilgastro", "title.about": "About · Bilgastro",
       "nav.home": "Home", "nav.places": "Reviews", "nav.map": "Food map", "nav.about": "About", "nav.menu": "Menu", "lang.label": "Language",
       "demo": "Demo preview · every place and review here is a made-up sample",
+      "demo.mixed": "Preview · places tagged “Sample” are made-up examples, the rest are our real reviews",
       "footer.explore": "Explore", "footer.sayhi": "Say hi", "footer.join": "Join the club", "footer.uni": "Bilkent University",
       "footer.photos": "Sample photos from Unsplash", "footer.pay": "We pay for every meal we review.",
       "sample": "Sample", "mustTry": "Must try", "places.n1": "{n} place", "places.n": "{n} places",
@@ -56,6 +57,7 @@
       "title.home": "Bilgastro · Bilkent Gastronomi Topluluğu", "title.places": "Mekanlar · Bilgastro", "title.map": "Lezzet haritası · Bilgastro", "title.about": "Hakkımızda · Bilgastro",
       "nav.home": "Ana sayfa", "nav.places": "Mekanlar", "nav.map": "Lezzet haritası", "nav.about": "Hakkımızda", "nav.menu": "Menü", "lang.label": "Dil",
       "demo": "Demo önizleme · buradaki tüm mekanlar ve yorumlar örnek amaçlıdır",
+      "demo.mixed": "Önizleme · “Örnek” etiketli mekanlar uydurmadır, diğerleri gerçek yorumlarımızdır",
       "footer.explore": "Keşfet", "footer.sayhi": "Bize ulaşın", "footer.join": "Kulübe katıl", "footer.uni": "Bilkent Üniversitesi",
       "footer.photos": "Örnek fotoğraflar: Unsplash", "footer.pay": "Yorumladığımız her yemeğin parasını kendimiz öderiz.",
       "sample": "Örnek", "mustTry": "Mutlaka deneyin", "places.n1": "{n} mekan", "places.n": "{n} mekan",
@@ -179,7 +181,7 @@
     if (header) {
       header.classList.remove("open");
       header.innerHTML = `
-        ${source === "sample" ? `<div class="demo-strip">${t("demo")}</div>` : ""}
+        ${source === "sample" ? `<div class="demo-strip">${t("demo")}</div>` : source === "mixed" ? `<div class="demo-strip">${t("demo.mixed")}</div>` : ""}
         <div class="nav wrap">
           <a class="brand" href="index.html" aria-label="Bilgastro">
             <img class="brand-mark" src="assets/img/logo-mark.png" alt="">
@@ -228,7 +230,7 @@
         </div>
         <div class="wrap footer-bottom">
           <span>© ${new Date().getFullYear()} Bilgastro · ${t("footer.uni")}</span>
-          <span>${source === "sample" ? t("footer.photos") : t("footer.pay")}</span>
+          <span>${source === "sheet" ? t("footer.pay") : t("footer.photos")}</span>
         </div>`;
     }
   }
@@ -260,15 +262,19 @@
   /* ---------- HOME ---------- */
   function home(places) {
     const main = $("#main");
-    const byScore = [...places].sort((a, b) => b.overall - a.overall);
+    const real = places.filter((p) => !p.sample);
+    const pool = real.length ? real : places; // real reviews take priority over samples
+    const byScore = [...pool].sort((a, b) => b.overall - a.overall);
     const star = byScore[0];
-    const heroPics = [star, ...places.filter((p) => p !== star)].filter((p) => p && p.photos[0]).slice(0, 3);
-    const avg = places.length ? places.reduce((s, p) => s + (p.overall || 0), 0) / places.length : 0;
+    // Places with photos first; places without photos still get a warm placeholder tile.
+    const heroPics = [star, ...places.filter((p) => p !== star)].filter(Boolean)
+      .sort((a, b) => !!b.photos[0] - !!a.photos[0]).slice(0, 3);
+    const avg = pool.length ? pool.reduce((s, p) => s + (p.overall || 0), 0) / pool.length : 0;
     const cats = [
       ...B.CATEGORIES.map((c) => ({ label: catLabel(c.key), emoji: c.emoji, href: `places.html?cat=${encodeURIComponent(c.key)}`, n: places.filter((p) => p.category === c.key).length })),
       ...B.FLAGS.map((f) => ({ label: flagLabel(f), emoji: f.emoji, special: "cat-flag-" + f.key, href: `places.html?${f.key}=1`, n: places.filter((p) => p[f.field]).length }))
     ];
-    const featured = places.find((p) => p.featured && p !== star) || byScore[1] || star;
+    const featured = pool.find((p) => p.featured) || places.find((p) => p.featured && p !== star) || byScore[1] || star;
     const today = new Date().toISOString().slice(0, 10);
     const events = (cfg.events || []).filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
     const starTry = star ? mustTryOf(star)[0] : "";
@@ -286,9 +292,9 @@
             </div>
             ${igLink("ig-inline", t("hero.ig", { ig: esc(cfg.instagram) }))}
             <dl class="hero-stats">
-              <div><dt>${t("stats.places")}</dt><dd>${places.length}</dd></div>
+              <div><dt>${t("stats.places")}</dt><dd>${pool.length}</dd></div>
               <div><dt>${t("stats.avg")}</dt><dd>${fmtScore(avg)}</dd></div>
-              <div><dt>${t("stats.student")}</dt><dd>${places.filter((p) => p.studentFriendly).length}</dd></div>
+              <div><dt>${t("stats.student")}</dt><dd>${pool.filter((p) => p.studentFriendly).length}</dd></div>
             </dl>
           </div>
           <div class="hero-art" aria-hidden="true">
@@ -463,7 +469,7 @@
         return true;
       });
       const sorters = {
-        newest: (a, b) => (b.visitDate || "").localeCompare(a.visitDate || ""),
+        newest: (a, b) => a.sample - b.sample || (b.visitDate || "").localeCompare(a.visitDate || ""), // real reviews first
         score: (a, b) => b.overall - a.overall,
         cheap: (a, b) => a.price - b.price || b.overall - a.overall,
         near: (a, b) => (a.distanceKm || 999) - (b.distanceKm || 999)
@@ -765,7 +771,7 @@
           <div class="cta-band">
             <div>
               <h2>${t("join.title")}</h2>
-              <p>${t("join.text", { n: places.length })}</p>
+              <p>${t("join.text", { n: places.filter((p) => !p.sample).length || places.length })}</p>
             </div>
             ${igUrl ? `<a class="btn btn-light btn-ig" href="${igUrl}" target="_blank" rel="noopener">${IG_ICON} ${t("join.dm")}</a>` : ""}
           </div>

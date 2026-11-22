@@ -195,17 +195,26 @@
           let objs = rows.length ? rowsToObjects(rows) : [];
           if (objs.length && "approved" in objs[0]) objs = objs.filter((o) => truthy(o.approved));
           const places = objs.filter((o) => o.name).map((o, i) => normalize(o, i, false));
+          if (places.length && cfg.showSamples) {
+            // Real reviews first, then the made-up samples (tagged "Sample") so the site doesn't look empty yet.
+            const ids = new Set(places.map((p) => p.id));
+            const extra = samplePlaces().filter((s) => !ids.has(s.id));
+            return { places: sortNewest(places).concat(sortNewest(extra)), source: "mixed" };
+          }
           if (places.length) return { places: sortNewest(places), source: "sheet" };
           console.info("Bilgastro: the Google Sheet has no approved reviews yet, showing sample data.");
         } catch (e) {
           console.warn("Bilgastro: could not load the Google Sheet, showing sample data instead.", e);
         }
       }
-      const places = (window.BILGASTRO_SAMPLE_PLACES || []).map((o, i) => normalize(o, i, true));
-      return { places: sortNewest(places), source: "sample" };
+      return { places: sortNewest(samplePlaces()), source: "sample" };
     })();
     return cache;
   };
+
+  function samplePlaces() {
+    return (window.BILGASTRO_SAMPLE_PLACES || []).map((o, i) => normalize(o, i, true));
+  }
 
   function sortNewest(list) {
     return list.sort((a, b) => (b.visitDate || "").localeCompare(a.visitDate || ""));
