@@ -13,7 +13,14 @@
   ];
   B.categoryEmoji = (c) => (B.CATEGORIES.find((x) => x.key === c) || {}).emoji || "🍴";
 
-  const WEIGHTS = { taste: 0.4, service: 0.2, atmosphere: 0.2, value: 0.2 };
+  // Separate "friendly" categories — a place can be in either, both or none, on top of its type.
+  B.FLAGS = [
+    { key: "student", field: "studentFriendly", label: "Student friendly", emoji: "🎓" },
+    { key: "veg", field: "veganFriendly", label: "Vegan/vegetarian friendly", emoji: "🌱" }
+  ];
+
+  // Overall score = average of taste and service (both out of 10).
+  const WEIGHTS = { taste: 0.5, service: 0.5 };
 
   const TR = { ç: "c", ğ: "g", ı: "i", İ: "i", ö: "o", ş: "s", ü: "u", â: "a", î: "i", û: "u", "&": "and" };
   B.slugify = (s) =>
@@ -53,6 +60,14 @@
     return /^(true|yes|y|1|x|✓|✔|evet|approved)$/i.test(String(v || "").trim());
   }
 
+  // "500-600" / "500 - 600 TL" / "500–600₺" → "500–600 TL"
+  function formatSpend(v) {
+    let s = String(v || "").trim();
+    if (!s) return "";
+    s = s.replace(/\s*(tl|₺)\s*$/i, "").replace(/\s*[-–—]\s*/g, "–");
+    return /\d/.test(s) ? s + " TL" : s;
+  }
+
   // Google Drive share links -> direct image links
   function photoUrl(url) {
     const m = String(url).match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]+)/);
@@ -80,7 +95,10 @@
     p.lat = num(raw.lat);
     p.lng = num(raw.lng);
     if (!isFinite(p.lat) || !isFinite(p.lng)) [p.lat, p.lng] = parseCoords(raw.coordinates);
-    p.price = Math.min(4, Math.max(1, Math.round(num(raw.price)) || 2));
+    // Price: 1–3 (₺, ₺₺, ₺₺₺). Also accepts "₺₺" typed directly.
+    const pr = /₺/.test(String(raw.price)) ? (String(raw.price).match(/₺/g) || []).length : Math.round(num(raw.price));
+    p.price = Math.min(3, Math.max(1, pr || 2));
+    p.spend = formatSpend(raw.spend);
     p.scores = {};
     let sum = 0, wsum = 0;
     for (const k of Object.keys(WEIGHTS)) {
@@ -94,6 +112,9 @@
     p.mustTry = toList(raw.mustTry);
     p.skip = String(raw.skip || "").trim();
     p.tags = toList(raw.tags, true);
+    const tagText = p.tags.join(" ").toLowerCase();
+    p.studentFriendly = raw.studentFriendly === true || truthy(raw.studentFriendly) || /student/.test(tagText);
+    p.veganFriendly = raw.veganFriendly === true || truthy(raw.veganFriendly) || /vegan|vegetarian/.test(tagText);
     p.reviewers = toList(raw.reviewers, true);
     p.visitDate = normDate(raw.visitDate);
     p.photos = toList(raw.photos).map(photoUrl);
@@ -126,6 +147,11 @@
   const HEADER_ALIASES = {
     must_try: "mustTry", musttry: "mustTry", visit_date: "visitDate", visitdate: "visitDate", date: "visitDate",
     latitude: "lat", longitude: "lng", lon: "lng", location: "coordinates", coords: "coordinates", google_maps_coordinates: "coordinates", photo: "photos", photo_links: "photos", reviewer: "reviewers",
+    avg_spend: "spend", average_spend: "spend", spend_per_person: "spend", price_range: "spend", avg_price: "spend", average_price: "spend",
+    student_friendly: "studentFriendly", student: "studentFriendly",
+    vegan_vegetarian_friendly: "veganFriendly", vegan_friendly: "veganFriendly", vegetarian_friendly: "veganFriendly",
+    vegan_vegetarian: "veganFriendly", vegan: "veganFriendly", vegetarian: "veganFriendly",
+    paragraph: "review", review_paragraph: "review",
     maybe_skip: "skip", value_score: "value", atmosphere_score: "atmosphere", value_for_money: "value", taste_score: "taste", service_score: "service"
   };
   function rowsToObjects(rows) {

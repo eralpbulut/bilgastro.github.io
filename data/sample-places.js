@@ -1,11 +1,11 @@
 /* =========================================================
    SAMPLE DATA — made-up places for the demo.
    These are NOT real businesses or real reviews.
-   Once the Google Sheet is connected, real reviews replace these.
+   The site only shows these while the Google Sheet has no approved reviews.
 
-   Scores are 1–10. Overall is calculated automatically:
-   taste 40%, service 20%, atmosphere 20%, value 20%.
-   Price: 1 = ₺ (cheap) … 4 = ₺₺₺₺ (special occasion).
+   taste, service: members' average score out of 10.
+   Overall = average of taste and service (calculated automatically).
+   price: 1 = ₺, 2 = ₺₺, 3 = ₺₺₺.  spend: what one person usually spends.
    ========================================================= */
 (function () {
   const u = (id, w) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w || 1200}&q=70`;
@@ -19,13 +19,11 @@
       area: "Bilkent",
       address: "Near Bilkent Center (sample address)",
       lat: 39.8832, lng: 32.7578,
-      price: 2,
-      taste: 9, service: 8, atmosphere: 9, value: 7,
-      headline: "The cortado that ruined every other cortado for us.",
-      review: "Tucked a short ride from campus, Fincan & Fern is the kind of place you walk into for one coffee and leave three chapters later. Beans rotate weekly and the baristas actually want to talk about them.\n\nOur cortado came out silky, sweet and balanced — no bitterness hiding behind the milk. The pistachio cookie is the sleeper hit: warm, slightly salty, gone in four bites. Prices are a little above a campus café, but the quality justifies it.\n\nPlenty of sockets, big windows, and a quiet back room that is basically made for exam season.",
-      mustTry: ["Cortado", "Pistachio cookie", "Cold brew tonic"],
-      skip: "The croissant — fine, but not at this level.",
-      tags: ["Study spot", "Student-friendly", "Wi-Fi", "Vegetarian options"],
+      taste: 9, service: 8.5,
+      price: 2, spend: "250-350",
+      studentFriendly: true, veganFriendly: true,
+      review: "A short ride from campus and easily the cosiest coffee stop we've found. The cortado was silky and sweet, the pistachio cookie came out warm, and the quiet back room with plenty of sockets is made for exam season. Oat milk and a couple of vegan bakes are always on the counter.",
+      mustTry: ["Cortado", "Pistachio cookie"],
       reviewers: ["Deniz", "Ece"],
       visitDate: "2026-11-02",
       photos: [u("1509042239860-f550ce710b93"), u("1501339847302-ac426a4a7cbb"), u("1495474472287-4d71bcdd2085")],
@@ -39,17 +37,14 @@
       area: "Hamamönü",
       address: "Old town lanes, Hamamönü (sample address)",
       lat: 39.9352, lng: 32.8641,
-      price: 1,
-      taste: 8, service: 7, atmosphere: 10, value: 10,
-      headline: "Tulip glasses, a courtyard, and gözleme straight off the sac.",
-      review: "If you only have one afternoon in old Ankara, spend it here. Semaver Garden sits in a restored courtyard with low stools, grapevines overhead and a samovar that never seems to run out.\n\nThe tea is strong, fresh and refilled before you ask. Order the potato-and-cheese gözleme — it arrives blistered and buttery, folded around a filling that is generously spiced. Cheap enough that the whole club ate for less than one restaurant main course.\n\nService slows down at weekends, but honestly, nobody comes here to rush.",
-      mustTry: ["Potato & cheese gözleme", "Samovar tea", "Ayran"],
-      skip: "",
-      tags: ["Student-friendly", "Group-friendly", "Outdoor seating", "Budget"],
+      taste: 8, service: 7.5,
+      price: 1, spend: "150-250",
+      studentFriendly: true, veganFriendly: true,
+      review: "A restored courtyard under grapevines, low stools, and a samovar that never runs dry. The potato-and-cheese gözleme arrived blistered and buttery, the spinach one is a good vegetarian pick, and the whole group ate for less than one restaurant main. Service slows down at weekends, but nobody comes here to rush.",
+      mustTry: ["Potato & cheese gözleme", "Samovar tea"],
       reviewers: ["Kerem", "Selin", "Mert"],
       visitDate: "2026-10-18",
-      photos: [u("1544787219-7f47ccb76574"), u("1576092768241-dec231879fc3")],
-      featured: false
+      photos: [u("1544787219-7f47ccb76574"), u("1576092768241-dec231879fc3")]
     },
     {
       id: "kirmizi-kor-ocakbasi",
@@ -59,17 +54,14 @@
       area: "Bahçelievler",
       address: "Off 7. Cadde, Bahçelievler (sample address)",
       lat: 39.9216, lng: 32.8228,
-      price: 3,
-      taste: 9, service: 8, atmosphere: 7, value: 8,
-      headline: "Sit at the grill. Trust the usta. Order the ezme twice.",
-      review: "Ask for a seat at the counter: the whole point of an ocakbaşı is watching the usta work the coals, and this one is a showman. Adana arrives juicy and properly smoky, with lavash that has soaked up every drop.\n\nThe meze spread is where it pulls ahead — the ezme is bright and fiery, the haydari thick and garlicky. Portions are big enough that four of us shared three mains comfortably.\n\nIt is loud and smoky on a Friday night, so not the place for a quiet chat. For a celebration dinner, though, it is hard to beat.",
-      mustTry: ["Adana kebab", "Acılı ezme", "Künefe to finish"],
-      skip: "Chicken wings — the only thing that came out dry.",
-      tags: ["Group-friendly", "Date spot", "Reservations recommended"],
+      taste: 9, service: 8,
+      price: 3, spend: "900-1200",
+      studentFriendly: false, veganFriendly: false,
+      review: "Ask for a seat at the counter and watch the usta work the coals. The Adana was juicy and properly smoky, and the meze spread — fiery ezme, garlicky haydari — was a highlight. It's loud and pricier than our usual spots, so we'd save it for a celebration dinner.",
+      mustTry: ["Adana kebab", "Acılı ezme"],
       reviewers: ["Zeynep", "Kerem"],
       visitDate: "2026-10-30",
-      photos: [u("1555939594-58d7cb561ad1"), u("1544025162-d76694265947"), u("1414235077428-338989a2e8c0")],
-      featured: true
+      photos: [u("1555939594-58d7cb561ad1"), u("1544025162-d76694265947"), u("1414235077428-338989a2e8c0")]
     },
     {
       id: "hamur-ve-halka",
@@ -79,17 +71,14 @@
       area: "Kızılay",
       address: "Side street near Kızılay square (sample address)",
       lat: 39.9199, lng: 32.8538,
-      price: 1,
-      taste: 8, service: 7, atmosphere: 7, value: 10,
-      headline: "Simit still warm from the oven at 7 a.m. — worth the alarm.",
-      review: "Hamur & Halka is a no-frills neighbourhood bakery that happens to make the best simit we tried in Kızılay. The crust shatters, the sesame is toasted dark, and the inside stays soft.\n\nThe full breakfast plate is a steal for students: cheeses, olives, tomatoes, honey with kaymak, a boiled egg and unlimited tea. Poğaça with olives is the one to grab on your way to class.\n\nSeating is limited and it gets packed before 9, so go early or take it to go.",
-      mustTry: ["Simit with kaymak & honey", "Olive poğaça", "Breakfast plate"],
-      skip: "",
-      tags: ["Budget", "Student-friendly", "Takeaway"],
+      taste: 8.5, service: 7,
+      price: 1, spend: "100-200",
+      studentFriendly: true, veganFriendly: true,
+      review: "A no-frills neighbourhood bakery with the best simit we tried in Kızılay: shattering crust, dark toasted sesame, soft inside. The breakfast plate with cheeses, olives, honey and kaymak and unlimited tea is a steal. Seating is tight before 9, so go early or take it to go.",
+      mustTry: ["Simit with kaymak & honey", "Olive poğaça"],
       reviewers: ["Mert"],
       visitDate: "2026-09-27",
-      photos: [u("1509440159596-0249088772ff"), u("1555507036-ab1f4038808a"), u("1493770348161-369560ae357d")],
-      featured: false
+      photos: [u("1509440159596-0249088772ff"), u("1555507036-ab1f4038808a"), u("1493770348161-369560ae357d")]
     },
     {
       id: "lokum-lab",
@@ -99,17 +88,14 @@
       area: "Tunalı Hilmi",
       address: "Tunalı Hilmi Caddesi area (sample address)",
       lat: 39.9035, lng: 32.8612,
-      price: 2,
-      taste: 10, service: 8, atmosphere: 8, value: 7,
-      headline: "A chocolate cake so dense it should come with a warning.",
-      review: "Lokum Lab plays with Turkish flavours in classic French desserts, and it mostly works brilliantly. The dark chocolate cake with a thin layer of sour cherry is the reason to come — rich, glossy, and not too sweet.\n\nThe tahini-and-pekmez tart was a club favourite too, nutty and just bitter enough. Slices are on the small side for the price, so share a few between friends and taste everything.\n\nGreat for a date or a celebration; not where you'd go for a cheap sugar fix.",
-      mustTry: ["Chocolate & sour cherry cake", "Tahini-pekmez tart", "Turkish coffee"],
-      skip: "The macarons — pretty, but forgettable.",
-      tags: ["Date spot", "Vegetarian options", "Instagrammable"],
+      taste: 9.5, service: 8,
+      price: 2, spend: "400-550",
+      studentFriendly: false, veganFriendly: true,
+      review: "Turkish flavours in French-style desserts. The dark chocolate cake with a thin layer of sour cherry was rich without being too sweet, and the tahini-and-pekmez tart was a group favourite. Slices are small for the price, so share a few and taste everything. There's always one vegan cake in the window.",
+      mustTry: ["Chocolate & sour cherry cake", "Tahini-pekmez tart"],
       reviewers: ["Ece", "Selin"],
       visitDate: "2026-11-08",
-      photos: [u("1578985545062-69928b1d9587"), u("1488477181946-6428a0291777"), u("1551024601-bec78aea704b")],
-      featured: false
+      photos: [u("1578985545062-69928b1d9587"), u("1488477181946-6428a0291777"), u("1551024601-bec78aea704b")]
     },
     {
       id: "odun-firini-pizza-co",
@@ -119,37 +105,31 @@
       area: "Ümitköy",
       address: "Ümitköy (sample address)",
       lat: 39.8932, lng: 32.7036,
-      price: 2,
-      taste: 8, service: 9, atmosphere: 8, value: 8,
-      headline: "Leopard-spotted crust and a sucuk pizza we keep thinking about.",
-      review: "The wood oven is right by the door, so you are hungry before you even sit down. The dough is a 48-hour ferment and you can taste it: airy, chewy, nicely charred.\n\nThe classic margherita is solid, but the sucuk-and-kaşar pizza with a drizzle of hot honey is the one that won the table. Staff were warm, fast, and happy to split the bill eight ways without a sigh.\n\nA dependable pick for group dinners after exams.",
-      mustTry: ["Sucuk & hot honey pizza", "Margherita", "Lemonade"],
-      skip: "The pasta — order pizza, it's in the name.",
-      tags: ["Group-friendly", "Student-friendly", "Vegetarian options"],
+      taste: 8, service: 9,
+      price: 2, spend: "450-600",
+      studentFriendly: true, veganFriendly: true,
+      review: "The wood oven sits right by the door and the 48-hour dough shows: airy, chewy, nicely charred. The sucuk pizza with hot honey won the table, and the vegetable pizza without cheese works well for vegan friends. Staff split the bill eight ways without a sigh, which makes it a great post-exam group dinner.",
+      mustTry: ["Sucuk & hot honey pizza", "Margherita"],
       reviewers: ["Deniz", "Zeynep", "Mert"],
       visitDate: "2026-10-11",
-      photos: [u("1513104890138-7c749659a591"), u("1565299624946-b28f40a0ae38"), u("1574071318508-1cdbab80d002")],
-      featured: false
+      photos: [u("1513104890138-7c749659a591"), u("1565299624946-b28f40a0ae38"), u("1574071318508-1cdbab80d002")]
     },
     {
       id: "yesil-kase",
       name: "Yeşil Kâse",
       category: "Restaurant",
-      cuisine: "Bowls & vegan-friendly",
+      cuisine: "Bowls & salads",
       area: "Çayyolu",
       address: "Çayyolu (sample address)",
       lat: 39.8800, lng: 32.6800,
-      price: 2,
-      taste: 7, service: 8, atmosphere: 8, value: 7,
-      headline: "Fresh, filling bowls for the days you swore you'd eat healthy.",
-      review: "Yeşil Kâse builds big, colourful bowls on bulgur, rice or greens, with toppings that change with the season. The roasted-pumpkin bowl with walnut tarator was the standout — sweet, creamy and properly seasoned.\n\nSome bowls lean bland until you add the house chilli oil, so ask for it on the side. Everything is clearly labelled for vegan and gluten-free diets, which our members really appreciated.\n\nBright, calm room; a good lunch spot if you live on the Çayyolu side.",
-      mustTry: ["Roasted pumpkin & tarator bowl", "House chilli oil", "Ginger lemonade"],
-      skip: "Falafel wrap — a bit dry.",
-      tags: ["Vegan options", "Gluten-free options", "Study spot"],
+      taste: 7.5, service: 8,
+      price: 2, spend: "350-500",
+      studentFriendly: false, veganFriendly: true,
+      review: "Big, colourful bowls on bulgur, rice or greens, with toppings that change with the season. The roasted pumpkin bowl with walnut tarator was the standout. Some bowls need the house chilli oil, so ask for it. Everything is clearly labelled vegan or vegetarian, which our members loved.",
+      mustTry: ["Roasted pumpkin & tarator bowl"],
       reviewers: ["Selin"],
       visitDate: "2026-09-20",
-      photos: [u("1512621776951-a57141f2eefd"), u("1546069901-ba9599a7e63c"), u("1540189549336-e6e99c3679fe")],
-      featured: false
+      photos: [u("1512621776951-a57141f2eefd"), u("1546069901-ba9599a7e63c"), u("1540189549336-e6e99c3679fe")]
     },
     {
       id: "gece-kusu-burger",
@@ -159,17 +139,14 @@
       area: "Bilkent",
       address: "Close to the east campus gate (sample address)",
       lat: 39.8752, lng: 32.7625,
-      price: 2,
-      taste: 8, service: 6, atmosphere: 6, value: 9,
-      headline: "The 1 a.m. smash burger that saves every all-nighter.",
-      review: "Gece Kuşu opens late and stays open later, which makes it a dorm legend. The double smash burger has crispy, lacy edges, melty cheddar and a sharp pickle sauce — simple and very well done.\n\nFries are hand-cut and come with a garlic mayo you will want a second pot of. It is a tiny place with a handful of stools and a queue at midnight, so takeaway is the move.\n\nService is slow when it's busy, but the price-to-happiness ratio is unbeatable near campus.",
+      taste: 8.5, service: 6.5,
+      price: 2, spend: "300-400",
+      studentFriendly: true, veganFriendly: false,
+      review: "Open late and close to the dorms, so it's already a legend. The double smash burger has crispy, lacy edges and a sharp pickle sauce, and the hand-cut fries come with a garlic mayo you'll want twice. It's tiny with a midnight queue, so takeaway is the move.",
       mustTry: ["Double smash burger", "Fries with garlic mayo"],
-      skip: "Chicken burger — fine, not special.",
-      tags: ["Late night", "Budget", "Takeaway", "Student-friendly"],
       reviewers: ["Kerem", "Deniz"],
       visitDate: "2026-11-10",
-      photos: [u("1568901346375-23c9450c58cd"), u("1550547660-d9450f859349"), u("1573080496219-bb080dd4f877")],
-      featured: false
+      photos: [u("1568901346375-23c9450c58cd"), u("1550547660-d9450f859349"), u("1573080496219-bb080dd4f877")]
     }
   ];
 })();

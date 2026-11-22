@@ -15,13 +15,22 @@
   };
   const fmtKm = (km) => (isFinite(km) ? (km < 10 ? km.toFixed(1) : Math.round(km)) + " km from campus" : "");
   const priceHtml = (n) =>
-    `<span class="price" aria-label="Price level ${n} of 4">${"₺".repeat(n)}<span class="dim">${"₺".repeat(4 - n)}</span></span>`;
+    `<span class="price" aria-label="Price level ${n} of 3">${"₺".repeat(n)}<span class="dim">${"₺".repeat(3 - n)}</span></span>`;
+  // "₺₺ (500–600 TL)"
+  const priceSpend = (p) => `${priceHtml(p.price)}${p.spend ? ` <span class="spend">(${esc(p.spend)})</span>` : ""}`;
+  const badges = (p) =>
+    B.FLAGS.filter((f) => p[f.field]).map((f) => `<span class="badge badge-${f.key}">${f.emoji} ${f.label}</span>`).join("");
+  const subline = (p) => esc(p.cuisine || p.category);
+  const excerpt = (p, n = 130) => {
+    const t = p.review.replace(/\s+/g, " ").trim();
+    return t.length > n ? t.slice(0, t.lastIndexOf(" ", n)) + "…" : t;
+  };
   B.verdict = (s) =>
     s >= 9 ? { label: "Must go", cls: "v-top" }
     : s >= 8 ? { label: "Highly recommended", cls: "v-great" }
     : s >= 7 ? { label: "Worth a try", cls: "v-good" }
     : s >= 6 ? { label: "It's okay", cls: "v-ok" }
-    : { label: "Skip it", cls: "v-low" };
+    : { label: "Not for us", cls: "v-low" };
   const placeUrl = (p) => `place.html?id=${encodeURIComponent(p.id)}`;
   const igUrl = cfg.instagram ? `https://www.instagram.com/${encodeURIComponent(cfg.instagram)}/` : "";
   const IG_ICON = `<svg class="ig-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.1" class="ig-dot"/></svg>`;
@@ -40,7 +49,6 @@
     ["index.html", "Home", "home"],
     ["places.html", "Reviews", "places"],
     ["map.html", "Food map", "map"],
-    ["rankings.html", "Rankings", "rankings"],
     ["about.html", "About", "about"]
   ];
 
@@ -108,8 +116,10 @@
         </div>
         <div class="card-body">
           <h3 class="card-title">${esc(p.name)}</h3>
-          <p class="card-meta">${esc(p.area)}${isFinite(p.distanceKm) ? ` · ${p.distanceKm.toFixed(1)} km` : ""} · ${priceHtml(p.price)}</p>
-          ${p.headline ? `<p class="card-quote">“${esc(p.headline)}”</p>` : ""}
+          <p class="card-meta">${esc(p.area)}${isFinite(p.distanceKm) ? ` · ${p.distanceKm.toFixed(1)} km` : ""}</p>
+          <p class="card-price">${priceSpend(p)}</p>
+          ${p.headline ? `<p class="card-quote">“${esc(p.headline)}”</p>` : p.review ? `<p class="card-excerpt">${esc(excerpt(p))}</p>` : ""}
+          ${badges(p) ? `<div class="badges">${badges(p)}</div>` : ""}
           ${p.mustTry.length ? `<p class="card-musttry"><span>Must try</span>${esc(p.mustTry[0])}</p>` : ""}
         </div>
       </a>`;
@@ -122,7 +132,10 @@
     const star = byScore[0];
     const heroPics = [star, ...places.filter((p) => p !== star)].filter((p) => p && p.photos[0]).slice(0, 3);
     const avg = places.length ? places.reduce((s, p) => s + (p.overall || 0), 0) / places.length : 0;
-    const cats = B.CATEGORIES.map((c) => ({ ...c, n: places.filter((p) => p.category === c.key).length }));
+    const cats = [
+      ...B.CATEGORIES.map((c) => ({ ...c, href: `places.html?cat=${encodeURIComponent(c.key)}`, n: places.filter((p) => p.category === c.key).length })),
+      ...B.FLAGS.map((f) => ({ key: f.label, emoji: f.emoji, special: "cat-flag-" + f.key, href: `places.html?${f.key}=1`, n: places.filter((p) => p[f.field]).length }))
+    ];
     const featured = places.find((p) => p.featured && p !== star) || byScore[1] || star;
     const today = new Date().toISOString().slice(0, 10);
     const events = (cfg.events || []).filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
@@ -142,7 +155,7 @@
             <dl class="hero-stats">
               <div><dt>Places tasted</dt><dd>${places.length}</dd></div>
               <div><dt>Average score</dt><dd>${fmtScore(avg)}</dd></div>
-              <div><dt>Must-try dishes</dt><dd>${places.reduce((s, p) => s + p.mustTry.length, 0)}</dd></div>
+              <div><dt>Student friendly</dt><dd>${places.filter((p) => p.studentFriendly).length}</dd></div>
             </dl>
           </div>
           <div class="hero-art" aria-hidden="true">
@@ -163,7 +176,7 @@
           </div>
           <div class="cat-row">
             ${cats.map((c) => `
-              <a class="cat-tile" href="places.html?cat=${encodeURIComponent(c.key)}">
+              <a class="cat-tile${c.special ? " " + c.special : ""}" href="${c.href}">
                 <span class="cat-emoji">${c.emoji}</span>
                 <span class="cat-name">${esc(c.key)}</span>
                 <span class="cat-count">${c.n} ${c.n === 1 ? "place" : "places"}</span>
@@ -188,10 +201,11 @@
           <a class="feature" href="${placeUrl(featured)}">
             <div class="feature-media">${photo(featured.photos[1] || featured.photos[0], featured.name, B.categoryEmoji(featured.category))}</div>
             <div class="feature-body">
-              <p class="eyebrow">Club favourite</p>
+              <p class="eyebrow">In the spotlight</p>
               <h2>${esc(featured.name)}</h2>
-              <p class="feature-meta">${esc(featured.cuisine)} · ${esc(featured.area)} · ${priceHtml(featured.price)}</p>
-              <p class="feature-quote">“${esc(featured.headline)}”</p>
+              <p class="feature-meta">${subline(featured)} · ${esc(featured.area)} · ${priceSpend(featured)}</p>
+              <p class="feature-quote">${featured.headline ? `“${esc(featured.headline)}”` : esc(excerpt(featured, 180))}</p>
+              ${badges(featured) ? `<div class="badges">${badges(featured)}</div>` : ""}
               <div class="feature-foot">
                 <span class="score-badge big ${B.verdict(featured.overall).cls}">${fmtScore(featured.overall)}</span>
                 <span class="feature-try">${featured.mustTry.slice(0, 3).map((m) => `<span class="chip">${esc(m)}</span>`).join("")}</span>
@@ -248,7 +262,9 @@
       area: params.get("area") || "",
       price: params.get("price") || "",
       min: params.get("min") || "",
-      sort: params.get("sort") || "newest"
+      sort: params.get("sort") || "newest",
+      student: params.get("student") === "1",
+      veg: params.get("veg") === "1"
     };
 
     main.innerHTML = `
@@ -256,7 +272,7 @@
         <div class="wrap">
           <p class="eyebrow">Every place we've tried</p>
           <h1>The reviews</h1>
-          <p class="lead">Honest scores out of 10, the dish to order, and the one to skip.</p>
+          <p class="lead">Taste and service out of 10, what you'll spend, and a few honest words about every place we visited.</p>
         </div>
       </section>
       <section class="wrap">
@@ -270,9 +286,12 @@
             <button data-cat="" class="chip-btn">All</button>
             ${B.CATEGORIES.map((c) => `<button data-cat="${esc(c.key)}" class="chip-btn">${c.emoji} ${esc(c.key)}</button>`).join("")}
           </div>
+          <div class="chips chips-flags" id="f-flags">
+            ${B.FLAGS.map((f) => `<button data-flag="${f.key}" class="chip-btn chip-flag chip-${f.key}">${f.emoji} ${f.label}</button>`).join("")}
+          </div>
           <div class="selects">
             <label>Area<select id="f-area"><option value="">Anywhere</option>${areas.map((a) => `<option>${esc(a)}</option>`).join("")}</select></label>
-            <label>Price<select id="f-price"><option value="">Any price</option><option value="1">₺ only</option><option value="2">Up to ₺₺</option><option value="3">Up to ₺₺₺</option></select></label>
+            <label>Price<select id="f-price"><option value="">Any price</option><option value="1">₺ only</option><option value="2">Up to ₺₺</option></select></label>
             <label>Score<select id="f-min"><option value="">Any score</option><option value="9">9+ Must go</option><option value="8">8+ Highly recommended</option><option value="7">7+ Worth a try</option></select></label>
             <label>Sort<select id="f-sort"><option value="newest">Newest first</option><option value="score">Highest score</option><option value="cheap">Cheapest first</option><option value="near">Closest to campus</option></select></label>
           </div>
@@ -294,8 +313,11 @@
         if (state.area && p.area !== state.area) return false;
         if (state.price && p.price > +state.price) return false;
         if (state.min && !(p.overall >= +state.min)) return false;
+        if (state.student && !p.studentFriendly) return false;
+        if (state.veg && !p.veganFriendly) return false;
         if (q) {
-          const hay = norm([p.name, p.category, p.cuisine, p.area, p.headline, p.review, p.mustTry.join(" "), p.tags.join(" ")].join(" "));
+          const flagText = B.FLAGS.filter((f) => p[f.field]).map((f) => f.label + (f.key === "veg" ? " vegan vegetarian" : "")).join(" ");
+          const hay = norm([p.name, p.category, p.cuisine, p.area, p.headline, p.review, p.mustTry.join(" "), p.tags.join(" "), flagText].join(" "));
           if (!q.split(" ").every((w) => hay.includes(w))) return false;
         }
         return true;
@@ -309,14 +331,17 @@
       list.sort(sorters[state.sort] || sorters.newest);
 
       $$("#f-cat .chip-btn").forEach((b) => b.setAttribute("aria-pressed", b.dataset.cat === state.cat));
+      $$("#f-flags .chip-btn").forEach((b) => b.setAttribute("aria-pressed", !!state[b.dataset.flag]));
       $("#count").textContent = `${list.length} ${list.length === 1 ? "place" : "places"}`;
       $("#results").innerHTML = list.length
         ? list.map(card).join("")
         : `<div class="empty"><span>🍽️</span><h3>Nothing on the menu matches that.</h3><p>Try fewer filters — or tell us where we should go next!</p><button class="btn btn-ghost" id="reset">Clear filters</button></div>`;
       const r = $("#reset");
-      if (r) r.onclick = () => { Object.assign(state, { q: "", cat: "", area: "", price: "", min: "" }); $("#f-q").value = ""; ["area", "price", "min"].forEach((k) => ($("#f-" + k).value = "")); apply(); };
+      if (r) r.onclick = () => { Object.assign(state, { q: "", cat: "", area: "", price: "", min: "", student: false, veg: false }); $("#f-q").value = ""; ["area", "price", "min"].forEach((k) => ($("#f-" + k).value = "")); apply(); };
 
-      const qs = new URLSearchParams(Object.entries(state).filter(([k, v]) => v && !(k === "sort" && v === "newest")));
+      const qs = new URLSearchParams(
+        Object.entries(state).filter(([k, v]) => v && !(k === "sort" && v === "newest")).map(([k, v]) => [k, v === true ? "1" : v])
+      );
       history.replaceState(null, "", qs.toString() ? "?" + qs : location.pathname);
     }
 
@@ -324,6 +349,10 @@
     $("#f-cat").addEventListener("click", (e) => {
       const b = e.target.closest(".chip-btn");
       if (b) { state.cat = b.dataset.cat; apply(); }
+    });
+    $("#f-flags").addEventListener("click", (e) => {
+      const b = e.target.closest(".chip-btn");
+      if (b) { state[b.dataset.flag] = !state[b.dataset.flag]; apply(); }
     });
     ["area", "price", "min", "sort"].forEach((k) => $("#f-" + k).addEventListener("change", (e) => { state[k] = e.target.value; apply(); }));
     apply();
@@ -339,7 +368,7 @@
     }
     document.title = `${p.name} · Bilgastro`;
     const v = B.verdict(p.overall);
-    const scoreRows = [["taste", "Taste"], ["service", "Service"], ["atmosphere", "Atmosphere"], ["value", "Value for money"]]
+    const scoreRows = [["taste", "Taste"], ["service", "Service"]]
       .filter(([k]) => isFinite(p.scores[k]))
       .map(([k, l]) => `
         <div class="bar-row">
@@ -362,10 +391,11 @@
           <a class="back" href="places.html">← All reviews</a>
           <div class="place-pills">
             <span class="pill pill-cat">${B.categoryEmoji(p.category)} ${esc(p.category)}</span>
+            ${B.FLAGS.filter((f) => p[f.field]).map((f) => `<span class="pill pill-flag">${f.emoji} ${f.label}</span>`).join("")}
             ${p.sample ? `<span class="pill pill-sample">Sample review</span>` : ""}
           </div>
           <h1>${esc(p.name)}</h1>
-          <p class="place-sub">${esc(p.cuisine)}${p.area ? " · " + esc(p.area) : ""} · ${priceHtml(p.price)}</p>
+          <p class="place-sub">${subline(p)}${p.area ? " · " + esc(p.area) : ""} · ${priceSpend(p)}</p>
           ${p.headline ? `<p class="place-headline">“${esc(p.headline)}”</p>` : ""}
         </div>
       </section>
@@ -403,10 +433,15 @@
             </div>
             <p class="verdict ${v.cls}">${v.label}</p>
             <div class="bars">${scoreRows}</div>
+            <div class="price-row">
+              <span>Price</span>
+              <b>${priceHtml(p.price)}</b>
+              ${p.spend ? `<small>${esc(p.spend)} per person</small>` : ""}
+            </div>
+            ${badges(p) ? `<div class="badges badges-center">${badges(p)}</div>` : ""}
           </div>
           <div class="panel info-panel">
             <dl>
-              <div><dt>Price</dt><dd>${priceHtml(p.price)}</dd></div>
               ${p.area ? `<div><dt>Area</dt><dd>${esc(p.area)}</dd></div>` : ""}
               ${isFinite(p.distanceKm) ? `<div><dt>Distance</dt><dd>${fmtKm(p.distanceKm)}</dd></div>` : ""}
               ${p.address ? `<div><dt>Address</dt><dd>${esc(p.address)}</dd></div>` : ""}
@@ -473,6 +508,7 @@
             <div class="chips chips-tight" id="m-cat">
               <button data-cat="" class="chip-btn">All</button>
               ${B.CATEGORIES.map((c) => `<button data-cat="${esc(c.key)}" class="chip-btn" title="${esc(c.key)}">${c.emoji} ${esc(c.key)}</button>`).join("")}
+              ${B.FLAGS.map((f) => `<button data-cat="${f.key}" class="chip-btn chip-flag chip-${f.key}">${f.emoji} ${f.label}</button>`).join("")}
             </div>
           </div>
           <ol class="map-list" id="m-list"></ol>
@@ -497,7 +533,7 @@
           ${photo(p.photos[0], p.name, B.categoryEmoji(p.category), "popup-ph")}
           <span class="popup-body">
             <b>${esc(p.name)}</b>
-            <span>${esc(p.cuisine)} · ${priceHtml(p.price)}</span>
+            <span>${subline(p)} · ${priceSpend(p)}</span>
             <span class="popup-score ${B.verdict(p.overall).cls}">${fmtScore(p.overall)} · ${B.verdict(p.overall).label}</span>
           </span>
         </a>`, { maxWidth: 260, minWidth: 220 });
@@ -505,7 +541,10 @@
     });
 
     function draw(fit) {
-      const list = located.filter((p) => !cat || p.category === cat).sort((a, b) => b.overall - a.overall);
+      const flag = B.FLAGS.find((f) => f.key === cat);
+      const list = located
+        .filter((p) => !cat || (flag ? p[flag.field] : p.category === cat))
+        .sort((a, b) => (a.distanceKm || 999) - (b.distanceKm || 999)); // nearest to campus first
       markers.forEach((mk, id) => (list.some((p) => p.id === id) ? mk.addTo(m) : mk.remove()));
       $$("#m-cat .chip-btn").forEach((b) => b.setAttribute("aria-pressed", b.dataset.cat === cat));
       $("#m-list").innerHTML = list.length
@@ -537,45 +576,6 @@
     void campus;
   }
 
-  /* ---------- RANKINGS ---------- */
-  function rankingsPage(places) {
-    const main = $("#main");
-    const by = (k) => (a, b) => (b.scores[k] || 0) - (a.scores[k] || 0) || b.overall - a.overall;
-    const lists = [
-      { title: "Top of the table", sub: "Our highest overall scores", emoji: "🏆", items: [...places].sort((a, b) => b.overall - a.overall), metric: (p) => p.overall, metricLabel: "overall" },
-      { title: "Best coffee", sub: "Cafés ranked by overall score", emoji: "☕", items: places.filter((p) => p.category === "Café").sort((a, b) => b.overall - a.overall), metric: (p) => p.overall, metricLabel: "overall" },
-      { title: "Best bang for your lira", sub: "Highest value-for-money scores", emoji: "💸", items: [...places].sort(by("value")), metric: (p) => p.scores.value, metricLabel: "value" },
-      { title: "Sweet tooth", sub: "Desserts, bakeries and breakfast", emoji: "🍰", items: places.filter((p) => ["Dessert", "Breakfast & Bakery"].includes(p.category)).sort((a, b) => b.overall - a.overall), metric: (p) => p.overall, metricLabel: "overall" },
-      { title: "Best study spots", sub: "Tagged “Study spot”, ranked by atmosphere", emoji: "📚", items: places.filter((p) => p.tags.includes("Study spot")).sort(by("atmosphere")), metric: (p) => p.scores.atmosphere, metricLabel: "atmosphere" },
-      { title: "Best atmosphere", sub: "Where the room is half the meal", emoji: "🕯️", items: [...places].sort(by("atmosphere")), metric: (p) => p.scores.atmosphere, metricLabel: "atmosphere" },
-      { title: "Late-night saviours", sub: "Open when the library closes", emoji: "🌙", items: places.filter((p) => p.tags.includes("Late night")).sort((a, b) => b.overall - a.overall), metric: (p) => p.overall, metricLabel: "overall" }
-    ].filter((l) => l.items.length);
-
-    main.innerHTML = `
-      <section class="page-head">
-        <div class="wrap">
-          <p class="eyebrow">The leaderboard</p>
-          <h1>Rankings</h1>
-          <p class="lead">The club's favourites, sliced every way we could think of.</p>
-        </div>
-      </section>
-      <section class="wrap rank-grid">
-        ${lists.map((l, li) => `
-          <article class="panel rank ${li === 0 ? "rank-wide" : ""}">
-            <header><span class="rank-emoji">${l.emoji}</span><div><h2>${esc(l.title)}</h2><p>${esc(l.sub)}</p></div></header>
-            <ol>
-              ${l.items.slice(0, li === 0 ? 5 : 3).map((p, i) => `
-                <li><a href="${placeUrl(p)}">
-                  <span class="rank-no n${i + 1}">${i + 1}</span>
-                  ${photo(p.photos[0], "", B.categoryEmoji(p.category), "rank-ph")}
-                  <span class="rank-body"><b>${esc(p.name)}</b><span>${esc(p.cuisine)} · ${esc(p.area)}</span></span>
-                  <span class="rank-score"><b>${fmtScore(l.metric(p))}</b><small>${l.metricLabel}</small></span>
-                </a></li>`).join("")}
-            </ol>
-          </article>`).join("")}
-      </section>`;
-  }
-
   /* ---------- ABOUT ---------- */
   function aboutPage(places) {
     const main = $("#main");
@@ -593,15 +593,15 @@
 
       <section class="section">
         <div class="wrap">
-          <div class="section-head"><div><p class="eyebrow">How we review</p><h2>Four scores, one honest verdict</h2></div></div>
+          <div class="section-head"><div><p class="eyebrow">How we review</p><h2>Taste, service and price</h2></div></div>
           <div class="how-grid">
-            <div class="panel how"><span>😋</span><h3>Taste <small>40%</small></h3><p>The food or drink itself. Flavour, freshness, and whether we'd order it again tomorrow.</p></div>
-            <div class="panel how"><span>🤝</span><h3>Service <small>20%</small></h3><p>Warmth, speed, and how they handle a table of eight hungry students.</p></div>
-            <div class="panel how"><span>🕯️</span><h3>Atmosphere <small>20%</small></h3><p>Light, noise, comfort — could you stay for a chat, a date, or an exam-week study session?</p></div>
-            <div class="panel how"><span>💸</span><h3>Value <small>20%</small></h3><p>Is it worth the money on a student budget? Cheap and great beats pricey and fine.</p></div>
+            <div class="panel how"><span>😋</span><h3>Taste <small>/ 10</small></h3><p>The food or drink itself: flavour, freshness, and whether we'd order it again. Our members' average score.</p></div>
+            <div class="panel how"><span>🤝</span><h3>Service <small>/ 10</small></h3><p>Warmth, speed, and how they treat a table of hungry students. Also our members' average score.</p></div>
+            <div class="panel how"><span>💸</span><h3>Price <small>₺ – ₺₺₺</small></h3><p>From ₺ (easy on a student budget) to ₺₺₺ (a treat), always with what one person usually spends, e.g. (500–600 TL).</p></div>
           </div>
+          <p class="note how-note">The big score on every place is the average of taste and service. Every place also gets a short paragraph from the members who went, and 🎓 student friendly or 🌱 vegan/vegetarian friendly badges when they fit.</p>
           <div class="scale">
-            ${[[9, "Must go"], [8, "Highly recommended"], [7, "Worth a try"], [6, "It's okay"], [0, "Skip it"]].map(([s, l]) => `<span class="scale-item ${B.verdict(s).cls}"><b>${s ? s + "+" : "< 6"}</b>${l}</span>`).join("")}
+            ${[[9, "Must go"], [8, "Highly recommended"], [7, "Worth a try"], [6, "It's okay"], [0, "Not for us"]].map(([s, l]) => `<span class="scale-item ${B.verdict(s).cls}"><b>${s ? s + "+" : "< 6"}</b>${l}</span>`).join("")}
           </div>
           <p class="note">We always pay for our own meals, and we visit as regular customers. No free food, no sponsored scores.</p>
         </div>
@@ -631,7 +631,7 @@
   }
 
   /* ---------- boot ---------- */
-  const PAGES = { home, places: placesPage, place: placePage, map: mapPage, rankings: rankingsPage, about: aboutPage };
+  const PAGES = { home, places: placesPage, place: placePage, map: mapPage, about: aboutPage };
   document.addEventListener("DOMContentLoaded", async () => {
     const { places, source } = await B.loadPlaces();
     renderChrome(source);
