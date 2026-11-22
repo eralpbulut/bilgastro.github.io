@@ -200,6 +200,24 @@ a.chip:hover { border-color: var(--tomato); color: var(--tomato); }
 }
 .nav-links a:hover { background: var(--cream-2); color: var(--ink); }
 .nav-links a[aria-current="page"] { background: var(--ink); color: var(--cream); }
+/* Language switch */
+.lang-switch {
+  order: 2;
+  display: inline-flex; flex: none;
+  margin-left: 12px; padding: 3px;
+  border-radius: 999px;
+  background: var(--cream-2);
+  border: 1.5px solid var(--line);
+}
+.lang-switch button {
+  border: 0; background: transparent; cursor: pointer;
+  font-size: 13px; font-weight: 800; letter-spacing: .04em;
+  padding: 6px 10px; border-radius: 999px; color: var(--muted);
+  transition: background .15s ease, color .15s ease;
+}
+.lang-switch button:hover { color: var(--ink); }
+.lang-switch button[aria-pressed="true"] { background: var(--ink); color: var(--cream); }
+
 /* Instagram */
 .ig-icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; }
 .ig-icon .ig-dot { fill: currentColor; stroke: none; }
@@ -244,7 +262,9 @@ a.chip:hover { border-color: var(--tomato); color: var(--tomato); }
   .brand-mark { width: 40px; height: 40px; }
   .brand-word { font-size: 22px; }
   .nav-toggle { display: block; margin-left: 6px; }
-  .ig-btn { margin-left: auto; padding: 9px; }
+  .lang-switch { margin-left: auto; }
+  .lang-switch button { padding: 6px 9px; }
+  .ig-btn { margin-left: 8px; padding: 9px; }
   .ig-btn span { display: none; }
   .nav-links {
     position: absolute; left: 0; right: 0; top: 100%;

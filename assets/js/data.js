@@ -4,19 +4,19 @@
   const cfg = window.BILGASTRO_CONFIG || {};
 
   B.CATEGORIES = [
-    { key: "Restaurant", emoji: "🍽️" },
-    { key: "Café", emoji: "☕" },
-    { key: "Tea House", emoji: "🫖" },
-    { key: "Dessert", emoji: "🍰" },
-    { key: "Breakfast & Bakery", emoji: "🥐" },
-    { key: "Street Food", emoji: "🌯" }
+    { key: "Restaurant", tr: "Restoran", emoji: "🍽️" },
+    { key: "Café", tr: "Kafe", emoji: "☕" },
+    { key: "Tea House", tr: "Çay Bahçesi", emoji: "🫖" },
+    { key: "Dessert", tr: "Tatlıcı", emoji: "🍰" },
+    { key: "Breakfast & Bakery", tr: "Kahvaltı & Fırın", emoji: "🥐" },
+    { key: "Street Food", tr: "Sokak Lezzetleri", emoji: "🌯" }
   ];
   B.categoryEmoji = (c) => (B.CATEGORIES.find((x) => x.key === c) || {}).emoji || "🍴";
 
   // Separate "friendly" categories — a place can be in either, both or none, on top of its type.
   B.FLAGS = [
-    { key: "student", field: "studentFriendly", label: "Student friendly", emoji: "🎓" },
-    { key: "veg", field: "veganFriendly", label: "Vegan/vegetarian friendly", emoji: "🌱" }
+    { key: "student", field: "studentFriendly", label: "Student friendly", tr: "Öğrenci dostu", emoji: "🎓" },
+    { key: "veg", field: "veganFriendly", label: "Vegan/vegetarian friendly", tr: "Vegan/vejetaryen dostu", emoji: "🌱" }
   ];
 
   // Overall score = average of taste and service (both out of 10).
@@ -87,8 +87,9 @@
     p.name = String(raw.name || "").trim();
     p.id = raw.id ? B.slugify(raw.id) : B.slugify(p.name) || "place-" + i;
     p.category = String(raw.category || "Restaurant").trim();
-    const known = B.CATEGORIES.find((c) => B.slugify(c.key) === B.slugify(p.category));
-    if (known) p.category = known.key; // "cafe" → "Café", "tea house" → "Tea House"
+    const cs = B.slugify(p.category);
+    const known = B.CATEGORIES.find((c) => B.slugify(c.key) === cs || B.slugify(c.tr) === cs);
+    if (known) p.category = known.key; // "cafe"/"Kafe" → "Café", "Çay Bahçesi" → "Tea House"
     p.cuisine = String(raw.cuisine || "").trim();
     p.area = String(raw.area || "").trim();
     p.address = String(raw.address || "").trim();
@@ -111,6 +112,12 @@
     p.review = String(raw.review || "").trim();
     p.mustTry = toList(raw.mustTry);
     p.skip = String(raw.skip || "").trim();
+    // Optional Turkish versions (the site shows whichever language the visitor picked, falling back to the other)
+    p.reviewTr = String(raw.reviewTr || "").trim();
+    p.cuisineTr = String(raw.cuisineTr || "").trim();
+    p.headlineTr = String(raw.headlineTr || "").trim();
+    p.skipTr = String(raw.skipTr || "").trim();
+    p.mustTryTr = toList(raw.mustTryTr);
     p.tags = toList(raw.tags, true);
     const tagText = p.tags.join(" ").toLowerCase();
     p.studentFriendly = raw.studentFriendly === true || truthy(raw.studentFriendly) || /student/.test(tagText);
@@ -151,7 +158,10 @@
     student_friendly: "studentFriendly", student: "studentFriendly",
     vegan_vegetarian_friendly: "veganFriendly", vegan_friendly: "veganFriendly", vegetarian_friendly: "veganFriendly",
     vegan_vegetarian: "veganFriendly", vegan: "veganFriendly", vegetarian: "veganFriendly",
-    paragraph: "review", review_paragraph: "review",
+    paragraph: "review", review_paragraph: "review", review_en: "review", cuisine_en: "cuisine", must_try_en: "mustTry",
+    review_tr: "reviewTr", yorum: "reviewTr", turkish_review: "reviewTr", review_turkish: "reviewTr",
+    cuisine_tr: "cuisineTr", mutfak: "cuisineTr", must_try_tr: "mustTryTr", musttry_tr: "mustTryTr",
+    headline_tr: "headlineTr", skip_tr: "skipTr",
     maybe_skip: "skip", value_score: "value", atmosphere_score: "atmosphere", value_for_money: "value", taste_score: "taste", service_score: "service"
   };
   function rowsToObjects(rows) {
