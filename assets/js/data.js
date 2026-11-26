@@ -216,6 +216,73 @@
     return (window.BILGASTRO_SAMPLE_PLACES || []).map((o, i) => normalize(o, i, true));
   }
 
+  /* ---------- Activities (past & upcoming events) ----------
+     Read from a tab named "Events" in the same Google Sheet.
+     Columns: Approved, Date, Time, Title, Title (TR), Where, Where (TR), Description, Description (TR),
+              Emoji, Photo, Instagram link, Place (name of a reviewed place, to link its review). */
+  function eventsUrl(url) {
+    const m = String(url).match(/docs\.google\.com\/spreadsheets\/d\/(?!e\/)([\w-]+)/);
+    return m ? `https://docs.google.com/spreadsheets/d/${m[1]}/gviz/tq?tqx=out:csv&sheet=Events` : "";
+  }
+  const str = (v) => String(v == null ? "" : v).trim();
+  function normalizeEvent(o, i, isSample) {
+    const e = {};
+    e.date = normDate(o.date || o.visitDate);
+    e.time = str(o.time);
+    e.title = str(o.title);
+    e.titleTr = str(o.titleTr || o.title_tr);
+    e.where = str(o.where);
+    e.whereTr = str(o.whereTr || o.where_tr);
+    e.description = str(o.description);
+    e.descriptionTr = str(o.descriptionTr || o.description_tr);
+    e.emoji = str(o.emoji) || "🍴";
+    e.photo = photoUrl(toList(o.photo || o.photos)[0] || "");
+    e.link = str(o.link || o.instagram_link || o.instagram);
+    e.place = str(o.place);
+    e.sample = !!isSample;
+    e.id = "ev-" + (e.date || i) + "-" + B.slugify(e.title || e.titleTr).slice(0, 30);
+    return e;
+  }
+  function sampleEvents() {
+    return (window.BILGASTRO_SAMPLE_EVENTS || []).map((o, i) => normalizeEvent(o, i, true));
+  }
+
+  const loadScript = (src) =>
+    new Promise((resolve) => {
+      const s = document.createElement("script");
+      s.src = src; s.onload = resolve; s.onerror = resolve; // missing file → just no samples
+      document.head.appendChild(s);
+    });
+
+  let evCache = null;
+  B.loadEvents = function () {
+    if (evCache) return evCache;
+    evCache = (async () => {
+      if (!window.BILGASTRO_SAMPLE_EVENTS) await loadScript("data/sample-events.js");
+      let real = [];
+      // eventsCsvUrl (optional) lets activities live somewhere else; otherwise the "Events" tab of the main sheet.
+      const url = cfg.eventsCsvUrl || (cfg.sheetCsvUrl ? eventsUrl(cfg.sheetCsvUrl) : "");
+      if (url) {
+        try {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const rows = parseCSV(await res.text());
+          let objs = rows.length > 1 ? rowsToObjects(rows) : [];
+          // Safety check: only trust it if it really is the Events tab (has a Title column and no Name column).
+          if (objs.length && ("title" in objs[0] || "title_tr" in objs[0]) && !("name" in objs[0])) {
+            if ("approved" in objs[0]) objs = objs.filter((o) => truthy(o.approved));
+            real = objs.filter((o) => str(o.title) || str(o.title_tr)).map((o, i) => normalizeEvent(o, i, false)).filter((e) => e.date);
+          }
+        } catch (e) {
+          console.info("Bilgastro: no Events tab found in the Google Sheet (or it couldn't be read).", e);
+        }
+      }
+      const events = real.length && !cfg.showSamples ? real : real.concat(cfg.showSamples || !real.length ? sampleEvents() : []);
+      return { events, hasReal: real.length > 0 };
+    })();
+    return evCache;
+  };
+
   function sortNewest(list) {
     return list.sort((a, b) => (b.visitDate || "").localeCompare(a.visitDate || ""));
   }

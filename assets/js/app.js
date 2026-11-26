@@ -51,7 +51,13 @@
       "board.eyebrow": "The people behind the forks", "board.title": "The board",
       "join.title": "Pull up a chair.", "join.text": "Any Bilkent student can join — no cooking skills required, just curiosity and an appetite. {n} places down, the whole city to go.",
       "join.dm": "DM us on Instagram",
-      "v.top": "Must go", "v.great": "Highly recommended", "v.good": "Worth a try", "v.ok": "It's okay", "v.low": "Not for us"
+      "v.top": "Must go", "v.great": "Highly recommended", "v.good": "Worth a try", "v.ok": "It's okay", "v.low": "Not for us",
+      "title.events": "Activities · Bilgastro", "nav.events": "Activities",
+      "acts.eyebrow": "What we've done & what's next", "acts.title": "Activities",
+      "acts.lead": "Tastings, food walks and dinners — past and upcoming. Every Bilkent student is welcome to join the next one.",
+      "acts.upcoming": "Coming up", "acts.past": "Past activities",
+      "acts.noneUp": "Nothing planned yet. Follow @{ig} for the next announcement.", "acts.nonePast": "No past activities yet.",
+      "acts.review": "Read the review →", "acts.ig": "See on Instagram", "acts.all": "All activities →"
     },
     tr: {
       "title.home": "Bilgastro · Bilkent Gastronomi Topluluğu", "title.places": "Mekanlar · Bilgastro", "title.map": "Lezzet haritası · Bilgastro", "title.about": "Hakkımızda · Bilgastro",
@@ -95,7 +101,13 @@
       "board.eyebrow": "Çatalların arkasındaki ekip", "board.title": "Yönetim kurulu",
       "join.title": "Bir sandalye de size.", "join.text": "Her Bilkent öğrencisi katılabilir — yemek yapmayı bilmenize gerek yok, merak ve iştah yeterli. {n} mekan geride, koca şehir önümüzde.",
       "join.dm": "Instagram'dan bize yazın",
-      "v.top": "Mutlaka gidin", "v.great": "Çok tavsiye ederiz", "v.good": "Denemeye değer", "v.ok": "Fena değil", "v.low": "Bize göre değil"
+      "v.top": "Mutlaka gidin", "v.great": "Çok tavsiye ederiz", "v.good": "Denemeye değer", "v.ok": "Fena değil", "v.low": "Bize göre değil",
+      "title.events": "Etkinlikler · Bilgastro", "nav.events": "Etkinlikler",
+      "acts.eyebrow": "Neler yaptık, neler yapacağız", "acts.title": "Etkinlikler",
+      "acts.lead": "Tadımlar, lezzet yürüyüşleri ve akşam yemekleri — geçmiş ve yaklaşan. Her Bilkent öğrencisi bir sonrakine katılabilir.",
+      "acts.upcoming": "Yaklaşan etkinlikler", "acts.past": "Geçmiş etkinlikler",
+      "acts.noneUp": "Henüz planlanmış bir etkinlik yok. Duyurular için @{ig} hesabını takip edin.", "acts.nonePast": "Henüz geçmiş etkinlik yok.",
+      "acts.review": "Yorumu oku →", "acts.ig": "Instagram'da gör", "acts.all": "Tüm etkinlikler →"
     }
   };
 
@@ -172,8 +184,89 @@
     ["index.html", "nav.home", "home"],
     ["places.html", "nav.places", "places"],
     ["map.html", "nav.map", "map"],
+    ["events.html", "nav.events", "events"],
     ["about.html", "nav.about", "about"]
   ];
+
+  /* ---------- activities (events) ---------- */
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const evTitle = (e) => (lang === "tr" ? e.titleTr || e.title : e.title || e.titleTr);
+  const evWhere = (e) => (lang === "tr" ? e.whereTr || e.where : e.where || e.whereTr);
+  const evDesc = (e) => (lang === "tr" ? e.descriptionTr || e.description : e.description || e.descriptionTr);
+  const splitEvents = (events) => {
+    const now = today();
+    return {
+      upcoming: events.filter((e) => e.date >= now).sort((a, b) => a.date.localeCompare(b.date) || a.sample - b.sample),
+      past: events.filter((e) => e.date < now).sort((a, b) => b.date.localeCompare(a.date) || a.sample - b.sample)
+    };
+  };
+  const evPlace = (e, places) => {
+    if (!e.place) return null;
+    const s = B.slugify(e.place);
+    return places.find((p) => p.id === s || B.slugify(p.name) === s) || null;
+  };
+  function upcomingCard(e) {
+    const d = new Date(e.date + "T12:00:00");
+    const where = evWhere(e);
+    return `
+      <article class="event">
+        <div class="event-date"><b>${d.getDate()}</b><span>${d.toLocaleDateString(locale(), { month: "short" })}</span></div>
+        <div class="event-body">
+          <h3>${esc(e.emoji)} ${esc(evTitle(e))}${e.sample ? ` <span class="sample-inline">${t("sample")}</span>` : ""}</h3>
+          <p class="event-meta">${d.toLocaleDateString(locale(), { weekday: "long" })}${e.time ? " · " + esc(e.time) : ""}${where ? " · " + esc(where) : ""}</p>
+          <p>${esc(evDesc(e))}</p>
+          ${e.link ? `<a class="event-link" href="${esc(e.link)}" target="_blank" rel="noopener">${IG_ICON} ${t("acts.ig")}</a>` : ""}
+        </div>
+      </article>`;
+  }
+  function pastCard(e, places) {
+    const d = new Date(e.date + "T12:00:00");
+    const where = evWhere(e);
+    const p = evPlace(e, places);
+    return `
+      <article class="act-card">
+        <div class="act-media">
+          ${photo(e.photo, evTitle(e), e.emoji)}
+          <span class="act-date">${d.toLocaleDateString(locale(), { day: "numeric", month: "short", year: "numeric" })}</span>
+          ${e.sample ? `<span class="sample-tag">${t("sample")}</span>` : ""}
+        </div>
+        <div class="act-body">
+          <h3>${esc(e.emoji)} ${esc(evTitle(e))}</h3>
+          ${where ? `<p class="act-meta">${esc(where)}</p>` : ""}
+          <p class="act-desc">${esc(evDesc(e))}</p>
+          ${p || e.link ? `<div class="act-links">
+            ${p ? `<a class="link-arrow" href="${placeUrl(p)}">${t("acts.review")}</a>` : ""}
+            ${e.link ? `<a class="event-link" href="${esc(e.link)}" target="_blank" rel="noopener">${IG_ICON} ${t("acts.ig")}</a>` : ""}
+          </div>` : ""}
+        </div>
+      </article>`;
+  }
+
+  function eventsPage(places, events) {
+    const { upcoming, past } = splitEvents(events);
+    $("#main").innerHTML = `
+      <section class="page-head">
+        <div class="wrap">
+          <p class="eyebrow">${t("acts.eyebrow")}</p>
+          <h1>${t("acts.title")}</h1>
+          <p class="lead">${t("acts.lead")}</p>
+        </div>
+      </section>
+      <section class="section section-tight">
+        <div class="wrap">
+          <div class="section-head"><div><h2>${t("acts.upcoming")}</h2></div></div>
+          ${upcoming.length ? `<div class="events">${upcoming.map(upcomingCard).join("")}</div>`
+            : `<p class="empty-line">${t("acts.noneUp", { ig: esc(cfg.instagram) })}</p>`}
+        </div>
+      </section>
+      <section class="section">
+        <div class="wrap">
+          <div class="section-head"><div><h2>${t("acts.past")}</h2></div></div>
+          ${past.length ? `<div class="act-grid">${past.map((e) => pastCard(e, places)).join("")}</div>`
+            : `<p class="empty-line">${t("acts.nonePast")}</p>`}
+        </div>
+      </section>`;
+  }
 
   function renderChrome(source) {
     const page = document.body.dataset.page;
@@ -260,7 +353,7 @@
   }
 
   /* ---------- HOME ---------- */
-  function home(places) {
+  function home(places, allEvents) {
     const main = $("#main");
     const real = places.filter((p) => !p.sample);
     const pool = real.length ? real : places; // real reviews take priority over samples
@@ -275,8 +368,7 @@
       ...B.FLAGS.map((f) => ({ label: flagLabel(f), emoji: f.emoji, special: "cat-flag-" + f.key, href: `places.html?${f.key}=1`, n: places.filter((p) => p[f.field]).length }))
     ];
     const featured = pool.find((p) => p.featured) || places.find((p) => p.featured && p !== star) || byScore[1] || star;
-    const today = new Date().toISOString().slice(0, 10);
-    const events = (cfg.events || []).filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+    const events = splitEvents(allEvents || []).upcoming;
     const starTry = star ? mustTryOf(star)[0] : "";
 
     main.innerHTML = `
@@ -358,22 +450,11 @@
       ${events.length ? `
       <section class="section">
         <div class="wrap">
-          <div class="section-head"><div><p class="eyebrow">${t("events.eyebrow")}</p><h2>${t("events.title")}</h2></div></div>
-          <div class="events">
-            ${events.slice(0, 3).map((e) => {
-              const d = new Date(e.date + "T12:00:00");
-              const where = L(e.where);
-              return `
-              <article class="event">
-                <div class="event-date"><b>${d.getDate()}</b><span>${d.toLocaleDateString(locale(), { month: "short" })}</span></div>
-                <div class="event-body">
-                  <h3>${esc(e.emoji || "")} ${esc(L(e.title))}</h3>
-                  <p class="event-meta">${d.toLocaleDateString(locale(), { weekday: "long" })}${e.time ? " · " + esc(e.time) : ""}${where ? " · " + esc(where) : ""}</p>
-                  <p>${esc(L(e.description))}</p>
-                </div>
-              </article>`;
-            }).join("")}
+          <div class="section-head">
+            <div><p class="eyebrow">${t("events.eyebrow")}</p><h2>${t("events.title")}</h2></div>
+            <a class="link-arrow" href="events.html">${t("acts.all")}</a>
           </div>
+          <div class="events">${events.slice(0, 3).map(upcomingCard).join("")}</div>
         </div>
       </section>` : ""}
 
@@ -780,7 +861,7 @@
   }
 
   /* ---------- boot ---------- */
-  const PAGES = { home, places: placesPage, place: placePage, map: mapPage, about: aboutPage };
+  const PAGES = { home, places: placesPage, place: placePage, map: mapPage, events: eventsPage, about: aboutPage };
   let loaded = null;
 
   function render() {
@@ -789,7 +870,7 @@
     if (STR[lang]["title." + page]) document.title = t("title." + page);
     renderChrome(loaded.source);
     const fn = PAGES[page];
-    if (fn) fn(loaded.places);
+    if (fn) fn(loaded.places, loaded.events);
   }
 
   function setLang(next) {
@@ -804,7 +885,10 @@
 
   document.addEventListener("DOMContentLoaded", async () => {
     document.documentElement.lang = lang;
-    loaded = await B.loadPlaces();
+    const page = document.body.dataset.page;
+    const needEvents = page === "home" || page === "events";
+    const [pl, ev] = await Promise.all([B.loadPlaces(), needEvents ? B.loadEvents() : Promise.resolve({ events: [] })]);
+    loaded = { ...pl, events: ev.events };
     render();
     document.body.classList.add("ready");
   });

@@ -26,31 +26,8 @@ window.BILGASTRO_CONFIG = {
   // false = show only your real reviews. Switch to false once you have enough real places.
   showSamples: true,
 
-  // Upcoming club visits. Past dates are hidden automatically.
-  events: [
-    {
-      date: "2026-11-21",
-      time: "11:00",
-      title: { en: "The Great Simit Hunt", tr: "Büyük Simit Avı" },
-      where: { en: "Meet at Bilkent Main Gate", tr: "Buluşma: Bilkent Ana Kapı" },
-      description: {
-        en: "Five bakeries, one morning. Bring an appetite and a few coins — we split everything.",
-        tr: "Beş fırın, tek sabah. İştahınızı ve biraz bozukluk getirin — her şeyi paylaşıyoruz."
-      },
-      emoji: "🥯"
-    },
-    {
-      date: "2026-12-05",
-      time: "18:30",
-      title: { en: "Winter Soup Night", tr: "Kış Çorbası Gecesi" },
-      where: "Ulus & Hamamönü",
-      description: {
-        en: "Mercimek, ezogelin, işkembe for the brave. A warm walk through old Ankara's soup spots.",
-        tr: "Mercimek, ezogelin, cesurlar için işkembe. Eski Ankara'nın çorbacılarında sıcacık bir yürüyüş."
-      },
-      emoji: "🍲"
-    }
-  ],
+  // Activities (past & upcoming) are posted in the "Events" tab of the Google Sheet above.
+  // Sample activities live in data/sample-events.js and follow showSamples.
 
   // About page — PLACEHOLDER names, replace with the real board.
   board: [
